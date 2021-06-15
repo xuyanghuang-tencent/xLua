@@ -815,10 +815,19 @@ namespace CSObjectWrapEditor
                     Name = param.Name,
                     IsOut = param.IsOut,
                     IsIn = param.IsIn,
-                    ParameterType = (param.ParameterType.IsByRef || (param.ParameterType.IsValueType && !ignoreValueType)
-                      || param.IsDefined(typeof(System.ParamArrayAttribute), false)) ? param.ParameterType : typeof(object),
                     IsParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false)
                 };
+
+                if (hotfixType.HasFlag(HotfixFlag.EnumUnderlyingType) && param.ParameterType.IsEnum)
+                {
+                    paramExpect.ParameterType = param.ParameterType.GetEnumUnderlyingType();
+                }
+                else
+                {
+                    paramExpect.ParameterType = (param.ParameterType.IsByRef || (param.ParameterType.IsValueType && !ignoreValueType)
+                                                                             || param.IsDefined(typeof(System.ParamArrayAttribute), false)) ? param.ParameterType : typeof(object);
+                }
+
                 if (param.IsOut)
                 {
                     hashCode++;

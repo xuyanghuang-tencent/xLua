@@ -170,6 +170,7 @@ namespace XLua
         AdaptByDelegate = 64,
         IgnoreCompilerGenerated = 128,
         NoBaseProxy = 256,
+        EnumUnderlyingType = 512
     }
 
     static class ExtentionMethods
@@ -540,8 +541,12 @@ namespace XLua
                             paramMatch = false;
                             break;
                         }
-						bool isparam = param_left.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.Name == "ParamArrayAttribute") != null;
-						var type_left = (isparam || param_left.ParameterType.IsByReference || (!ignoreValueType && param_left.ParameterType.IsValueType)) ? param_left.ParameterType : objType;
+                        bool isparam = param_left.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.Name == "ParamArrayAttribute") != null;
+                        var type_left = (isparam || param_left.ParameterType.IsByReference || (!ignoreValueType && param_left.ParameterType.IsValueType)) ? param_left.ParameterType : objType;
+                        if (hotfixType.HasFlag(HotfixFlagInTool.EnumUnderlyingType) && type_left.Resolve().IsEnum)
+                        {
+                            type_left = type_left.Resolve().Fields[0].FieldType;
+                        }
                         if (!isSameType(type_left, param_right.ParameterType))
                         {
                             paramMatch = false;

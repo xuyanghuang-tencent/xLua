@@ -103,6 +103,7 @@ namespace XLua
         AdaptByDelegate = 64,
         IgnoreCompilerGenerated = 128,
         NoBaseProxy = 256,
+        EnumUnderlyingType = 512
     }
 
     public class HotfixAttribute : Attribute
