@@ -543,7 +543,7 @@ namespace XLua
                         }
                         bool isparam = param_left.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.Name == "ParamArrayAttribute") != null;
                         var type_left = (isparam || param_left.ParameterType.IsByReference || (!ignoreValueType && param_left.ParameterType.IsValueType)) ? param_left.ParameterType : objType;
-                        if (hotfixType.HasFlag(HotfixFlagInTool.EnumUnderlyingType) && type_left.Resolve().IsEnum)
+                        if (hotfixType.HasFlag(HotfixFlagInTool.EnumUnderlyingType) && type_left.Resolve().IsEnum && !param_left.IsOut && !param_left.ParameterType.IsByReference)
                         {
                             type_left = type_left.Resolve().Fields[0].FieldType;
                         }

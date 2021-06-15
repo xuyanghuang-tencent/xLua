@@ -787,6 +787,19 @@ namespace CSObjectWrapEditor
             return type.IsGenericParameter;
         }
 
+        static Type getEnumUnderlyingType(Type type)
+        {
+#if NET_2_0
+            FieldInfo[] fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (fields == null || fields.Length != 1)
+                throw new ArgumentException();
+
+            return fields[0].FieldType;
+#else
+            return type.GetEnumUnderlyingType();
+#endif
+        }
+
         static MethodInfoSimulation makeHotfixMethodInfoSimulation(MethodBase hotfixMethod, HotfixFlag hotfixType)
         {
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlag.ValueTypeBoxing);
@@ -818,9 +831,9 @@ namespace CSObjectWrapEditor
                     IsParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false)
                 };
 
-                if (hotfixType.HasFlag(HotfixFlag.EnumUnderlyingType) && param.ParameterType.IsEnum)
+                if (hotfixType.HasFlag(HotfixFlag.EnumUnderlyingType) && param.ParameterType.IsEnum && !param.IsOut && !param.ParameterType.IsByRef)
                 {
-                    paramExpect.ParameterType = param.ParameterType.GetEnumUnderlyingType();
+                    paramExpect.ParameterType = getEnumUnderlyingType(param.ParameterType);
                 }
                 else
                 {
