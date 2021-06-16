@@ -567,7 +567,8 @@ namespace XLua
                         }
                         bool isparam = param_left.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.Name == "ParamArrayAttribute") != null;
                         TypeReference type_left;
-                        if(hotfixType.HasFlag(HotfixFlagInTool.EnumUnderlyingType) && tryEnumUnderlying(param_left, out var underlyingType))
+                        TypeReference underlyingType;
+                        if(hotfixType.HasFlag(HotfixFlagInTool.EnumUnderlyingType) && tryEnumUnderlying(param_left, out underlyingType))
                             type_left = underlyingType;
                         else
                             type_left = (isparam || param_left.ParameterType.IsByReference || (!ignoreValueType && param_left.ParameterType.IsValueType)) ? param_left.ParameterType : objType;

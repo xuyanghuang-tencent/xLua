@@ -854,7 +854,8 @@ namespace CSObjectWrapEditor
                     IsParamArray = isParamArray
                 };
 
-                if (hotfixType.HasFlag(HotfixFlag.EnumUnderlyingType) && tryPopulateEnumUnderlying(param, out var underlyingType))
+                Type underlyingType;
+                if (hotfixType.HasFlag(HotfixFlag.EnumUnderlyingType) && tryPopulateEnumUnderlying(param, out underlyingType))
                 {
                     paramExpect.ParameterType = underlyingType;
                 }
