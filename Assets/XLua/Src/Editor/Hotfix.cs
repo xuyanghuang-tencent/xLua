@@ -496,6 +496,30 @@ namespace XLua
             return ret;
         }
 
+        static bool tryEnumUnderlying(ParameterDefinition param, out TypeReference underlyingType)
+        {
+            underlyingType = null;
+            var paramType = param.ParameterType;
+            if (param.IsOut || paramType.IsByReference)
+                return false;
+
+            if (paramType.IsArray)
+            {
+                // var elementType = paramType.GetElementType();
+                // if (!elementType.Resolve().IsEnum)
+                //      return false;
+                // underlyingType = new ArrayType(elementType.Resolve().Fields[0].FieldType);
+                // return true;
+                return false;
+            }
+
+            if (!paramType.Resolve().IsEnum) 
+                return false;
+
+            underlyingType = paramType.Resolve().Fields[0].FieldType;
+            return true;
+        }
+
         bool findHotfixDelegate(MethodDefinition method, out MethodReference invoke, HotfixFlagInTool hotfixType)
         {
             bool ignoreValueType = hotfixType.HasFlag(HotfixFlagInTool.ValueTypeBoxing);
@@ -542,11 +566,12 @@ namespace XLua
                             break;
                         }
                         bool isparam = param_left.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.Name == "ParamArrayAttribute") != null;
-                        var type_left = (isparam || param_left.ParameterType.IsByReference || (!ignoreValueType && param_left.ParameterType.IsValueType)) ? param_left.ParameterType : objType;
-                        if (hotfixType.HasFlag(HotfixFlagInTool.EnumUnderlyingType) && type_left.Resolve().IsEnum && !param_left.IsOut && !param_left.ParameterType.IsByReference)
-                        {
-                            type_left = type_left.Resolve().Fields[0].FieldType;
-                        }
+                        TypeReference type_left;
+                        if(hotfixType.HasFlag(HotfixFlagInTool.EnumUnderlyingType) && tryEnumUnderlying(param_left, out var underlyingType))
+                            type_left = underlyingType;
+                        else
+                            type_left = (isparam || param_left.ParameterType.IsByReference || (!ignoreValueType && param_left.ParameterType.IsValueType)) ? param_left.ParameterType : objType;
+
                         if (!isSameType(type_left, param_right.ParameterType))
                         {
                             paramMatch = false;

@@ -789,15 +789,37 @@ namespace CSObjectWrapEditor
 
         static Type getEnumUnderlyingType(Type type)
         {
-#if NET_2_0
             FieldInfo[] fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             if (fields == null || fields.Length != 1)
                 throw new ArgumentException();
 
             return fields[0].FieldType;
-#else
-            return type.GetEnumUnderlyingType();
-#endif
+        }
+
+        static bool tryPopulateEnumUnderlying(ParameterInfo param, out Type underlyingType)
+        {
+            var isParamArray = param.IsDefined(typeof(ParamArrayAttribute), false);
+            underlyingType = null;
+            if (param.IsOut || param.ParameterType.IsByRef) 
+                return false;
+
+            if (isParamArray)
+            {
+                // var elementType = param.ParameterType.GetElementType();
+                // if (elementType != null && elementType.IsEnum)
+                // {
+                //    underlyingType = getEnumUnderlyingType(elementType).MakeArrayType();
+                //    return true;
+                // }
+                return false;
+            }
+            else if (param.ParameterType.IsEnum)
+            {
+                underlyingType = getEnumUnderlyingType(param.ParameterType);
+                return true;
+            }
+
+            return false;
         }
 
         static MethodInfoSimulation makeHotfixMethodInfoSimulation(MethodBase hotfixMethod, HotfixFlag hotfixType)
@@ -823,22 +845,23 @@ namespace CSObjectWrapEditor
 
             foreach (var param in hotfixMethod.GetParameters())
             {
+                var isParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false);
                 var paramExpect = new ParameterInfoSimulation()
                 {
                     Name = param.Name,
                     IsOut = param.IsOut,
                     IsIn = param.IsIn,
-                    IsParamArray = param.IsDefined(typeof(System.ParamArrayAttribute), false)
+                    IsParamArray = isParamArray
                 };
 
-                if (hotfixType.HasFlag(HotfixFlag.EnumUnderlyingType) && param.ParameterType.IsEnum && !param.IsOut && !param.ParameterType.IsByRef)
+                if (hotfixType.HasFlag(HotfixFlag.EnumUnderlyingType) && tryPopulateEnumUnderlying(param, out var underlyingType))
                 {
-                    paramExpect.ParameterType = getEnumUnderlyingType(param.ParameterType);
+                    paramExpect.ParameterType = underlyingType;
                 }
                 else
                 {
                     paramExpect.ParameterType = (param.ParameterType.IsByRef || (param.ParameterType.IsValueType && !ignoreValueType)
-                                                                             || param.IsDefined(typeof(System.ParamArrayAttribute), false)) ? param.ParameterType : typeof(object);
+                                                                             || isParamArray) ? param.ParameterType : typeof(object);
                 }
 
                 if (param.IsOut)
